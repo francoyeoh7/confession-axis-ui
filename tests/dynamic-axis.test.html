@@ -168,7 +168,7 @@
       assert("q1 pointer keeps bottom segment at minimum", nearlyEqual(lengths.bottom, 43), JSON.stringify(lengths));
       assert("q1 pointer activates first quadrant", scene.dataset.quadrant === "q1", scene.dataset.quadrant);
       assert("q1 pointer highlights positive labels", scene.dataset.axisX === "right" && scene.dataset.axisY === "top", `${scene.dataset.axisX}/${scene.dataset.axisY}`);
-      await wait(160);
+      await wait(560);
 
       const q1Focus = doc.querySelector(".quadrant-focus--q1");
       const q3Focus = doc.querySelector(".quadrant-focus--q3");
@@ -234,9 +234,24 @@
       assert("bottom label follows extended negative y axis", bottomLabel.top > 840, JSON.stringify(bottomLabel));
 
       const coveredInitialPointX = stylesFor(scene).getPropertyValue("--point-x");
+      const overlapTarget = doc.elementFromPoint(360, 840);
+      assert(
+        "transparent dialogue background does not intercept the lower axis field",
+        overlapTarget === axisHitArea || overlapTarget.closest("#axisPad"),
+        overlapTarget?.id || overlapTarget?.className || "none"
+      );
+      movePointer(360, 840);
+      await wait(120);
+      assert(
+        "axis responds inside the dialogue-overlap band",
+        stylesFor(scene).getPropertyValue("--point-x") !== coveredInitialPointX,
+        `${coveredInitialPointX} -> ${stylesFor(scene).getPropertyValue("--point-x")}`
+      );
+
+      const overlayMoveStartX = stylesFor(scene).getPropertyValue("--point-x");
       win.dispatchEvent(new win.PointerEvent("pointermove", {
         bubbles: true,
-        clientX: 360,
+        clientX: 420,
         clientY: 760,
         pointerId: 9,
         pointerType: "mouse",
@@ -244,8 +259,8 @@
       await wait(120);
       assert(
         "axis still responds when an in-bounds pointer is over dialogue overlay",
-        stylesFor(scene).getPropertyValue("--point-x") !== coveredInitialPointX,
-        `${coveredInitialPointX} -> ${stylesFor(scene).getPropertyValue("--point-x")}`
+        stylesFor(scene).getPropertyValue("--point-x") !== overlayMoveStartX,
+        `${overlayMoveStartX} -> ${stylesFor(scene).getPropertyValue("--point-x")}`
       );
 
       let qEventSeen = false;

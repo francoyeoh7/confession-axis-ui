@@ -13,6 +13,7 @@ function Assert-True($condition, $message) {
 }
 
 Assert-True ($index -notmatch 'readout|id="prompt"|id="meta"') 'Unexpected extra readout UI is present.'
+Assert-True ($index -match 'styles\.css\?v=' -and $index -match 'src/app\.js\?v=') 'CSS and JS assets should be cache-busted so remote previews do not keep stale interaction code.'
 Assert-True ($index -match '<video') 'Background must be an mp4 video element.'
 Assert-True ($index -match 'scene-background\.mp4') 'Background video source is missing.'
 Assert-True ($index -notmatch 'scene-background\.png') 'Static PNG must not be used as the page background.'
@@ -24,6 +25,7 @@ Assert-True ($index -match 'id="axisHitArea"') 'Pointer interaction should use a
 Assert-True ($css -match '\.axis-hit-area[\s\S]*width:\s*1500px' -and $css -match '\.axis-hit-area[\s\S]*height:\s*650px') 'Axis hit area should not cover the full screen.'
 Assert-True ($app -match 'axisHitArea\.addEventListener\("pointer' -and $app -notmatch 'uiStage\.addEventListener\("pointer') 'Pointer events should be bound to the axis hit area, not the full UI stage.'
 Assert-True ($app -match 'window\.addEventListener\("pointermove"') 'Pointer movement should keep working when visible overlays sit above the axis hit area.'
+Assert-True ($css -match '\.dialogue\s*\{[\s\S]*pointer-events:\s*none' -and $css -match '\.dialogue__choice\s*\{[\s\S]*pointer-events:\s*auto') 'Dialogue background should not block axis hover, while the yellow response remains clickable.'
 Assert-True ($app -match 'dataset\.locked' -and $app -match 'isLocked') 'Confirmation should lock the selected state.'
 Assert-True ($app -match 'dialogueChoice\.addEventListener\("click"') 'Clicking the yellow response area should confirm the selection.'
 Assert-True ($app -match 'togglePreviewVisibility' -and $app -match 'previewHidden') 'Q should toggle the pre-confirmation axis and yellow preview visibility.'

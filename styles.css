@@ -377,6 +377,7 @@ button {
   width: 1920px;
   height: 255px;
   background: none;
+  pointer-events: none;
 }
 
 .dialogue__choice {
@@ -387,6 +388,7 @@ button {
   height: 46px;
   cursor: pointer;
   opacity: 1;
+  pointer-events: auto;
   transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
