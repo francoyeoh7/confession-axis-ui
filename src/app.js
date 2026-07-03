@@ -194,6 +194,11 @@ axisHitArea.addEventListener("pointermove", (event) => {
   updateFromEvent(event, activePointerId !== null);
 });
 
+window.addEventListener("pointermove", (event) => {
+  if (activePointerId !== null) return;
+  updateFromEvent(event);
+});
+
 axisHitArea.addEventListener("pointerup", (event) => {
   if (activePointerId !== event.pointerId) return;
   updateFromEvent(event, true);

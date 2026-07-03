@@ -233,6 +233,21 @@
       assert("left label follows extended negative x axis", leftLabel.left < 180, JSON.stringify(leftLabel));
       assert("bottom label follows extended negative y axis", bottomLabel.top > 840, JSON.stringify(bottomLabel));
 
+      const coveredInitialPointX = stylesFor(scene).getPropertyValue("--point-x");
+      win.dispatchEvent(new win.PointerEvent("pointermove", {
+        bubbles: true,
+        clientX: 360,
+        clientY: 760,
+        pointerId: 9,
+        pointerType: "mouse",
+      }));
+      await wait(120);
+      assert(
+        "axis still responds when an in-bounds pointer is over dialogue overlay",
+        stylesFor(scene).getPropertyValue("--point-x") !== coveredInitialPointX,
+        `${coveredInitialPointX} -> ${stylesFor(scene).getPropertyValue("--point-x")}`
+      );
+
       let qEventSeen = false;
       win.addEventListener("keydown", () => {
         qEventSeen = true;
