@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Axis Interaction Test</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #f7f7f7;
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    iframe {
+      width: 1920px;
+      height: 1080px;
+      border: 0;
+    }
+
+    pre {
+      position: fixed;
+      left: 24px;
+      top: 24px;
+      margin: 0;
+      white-space: pre-wrap;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="page" src="../index.html" title="Confession Axis"></iframe>
+  <pre id="output">Running...</pre>
+
+  <script>
+    const iframe = document.getElementById("page");
+    const output = document.getElementById("output");
+    const results = [];
+
+    function assert(name, condition, details = "") {
+      if (!condition) {
+        throw new Error(`${name}${details ? `: ${details}` : ""}`);
+      }
+      results.push(`PASS ${name}`);
+    }
+
+    function parsePx(value) {
+      return Number.parseFloat(String(value).replace("px", ""));
+    }
+
+    function nearlyEqual(actual, expected, epsilon = 0.05) {
+      return Math.abs(actual - expected) <= epsilon;
+    }
+
+    function rect(doc, selector) {
+      const box = doc.querySelector(selector).getBoundingClientRect();
+      return {
+        left: box.left,
+        top: box.top,
+        right: box.right,
+        bottom: box.bottom,
+        width: box.width,
+        height: box.height,
+      };
+    }
+
+    function style(doc, selector) {
+      return doc.defaultView.getComputedStyle(doc.querySelector(selector));
+    }
+
+    function rgbChannels(color) {
+      const match = color.match(/\d+(\.\d+)?/g);
+      return match ? match.slice(0, 3).map(Number) : [0, 0, 0];
+    }
+
+    function isWarmHighlight(color) {
+      const [red, green, blue] = rgbChannels(color);
+      return red >= 250 && green >= 235 && blue < 245;
+    }
+
+    function wait(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function waitForPageReady() {
+      const startedAt = performance.now();
+
+      while (performance.now() - startedAt < 5000) {
+        const doc = iframe.contentDocument;
+        const scene = doc?.querySelector(".scene");
+        if (
+          doc?.getElementById("axisPad") &&
+          doc.getElementById("responseLine") &&
+          scene?.dataset.locked === "false" &&
+          scene.style.getPropertyValue("--axis-right-length")
+        ) {
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      throw new Error("Timed out waiting for iframe page to load");
+    }
+
+    async function run() {
+      await waitForPageReady();
+      const win = iframe.contentWindow;
+      const doc = iframe.contentDocument;
+      await wait(120);
+
+      const axisPad = doc.getElementById("axisPad");
+      const scene = doc.querySelector(".scene");
+      const confirmButton = doc.getElementById("confirmButton");
+      const responseLine = doc.getElementById("responseLine");
+      const choice = doc.querySelector(".dialogue__choice");
+      const axisStage = doc.querySelector(".axis-stage");
+      const sectorHighlight = doc.querySelector(".sector-highlight");
+      const axisHitArea = doc.getElementById("axisHitArea");
+
+      const hitArea = rect(doc, "#axisHitArea");
+      assert(
+        "pointer hit area matches the requested 1500 by 650 axis field",
+        nearlyEqual(hitArea.width, 1500, 0.05) && nearlyEqual(hitArea.height, 650, 0.05),
+        JSON.stringify(hitArea)
+      );
+
+      function movePointer(clientX, clientY) {
+        const target = doc.elementFromPoint(clientX, clientY);
+        target.dispatchEvent(new win.PointerEvent("pointermove", {
+          bubbles: true,
+          clientX,
+          clientY,
+          pointerId: 7,
+          pointerType: "mouse",
+        }));
+      }
+
+      const initialPointX = stylesFor(scene).getPropertyValue("--point-x");
+      const initialPointY = stylesFor(scene).getPropertyValue("--point-y");
+      movePointer(60, 60);
+      await wait(80);
+      assert(
+        "pointer outside the 1500 by 650 axis field does not move selector",
+        stylesFor(scene).getPropertyValue("--point-x") === initialPointX &&
+          stylesFor(scene).getPropertyValue("--point-y") === initialPointY,
+        `${initialPointX}, ${initialPointY} -> ${stylesFor(scene).getPropertyValue("--point-x")}, ${stylesFor(scene).getPropertyValue("--point-y")}`
+      );
+
+      movePointer(360, 760);
+      await wait(80);
+      const movedPointX = stylesFor(scene).getPropertyValue("--point-x");
+      assert("axis responds to mouse movement before any shortcut", initialPointX !== movedPointX, `${initialPointX} -> ${movedPointX}`);
+
+      movePointer(1560, 442.5);
+      await wait(80);
+
+      const styles = win.getComputedStyle(scene);
+      const lengths = {
+        left: parsePx(styles.getPropertyValue("--axis-left-length")),
+        right: parsePx(styles.getPropertyValue("--axis-right-length")),
+        top: parsePx(styles.getPropertyValue("--axis-top-length")),
+        bottom: parsePx(styles.getPropertyValue("--axis-bottom-length")),
+      };
+
+      assert("q1 pointer sets right segment to 80 points", nearlyEqual(lengths.right, 600), JSON.stringify(lengths));
+      assert("q1 pointer sets top segment to 30 points", nearlyEqual(lengths.top, 97.5), JSON.stringify(lengths));
+      assert("q1 pointer keeps left segment at minimum", nearlyEqual(lengths.left, 46), JSON.stringify(lengths));
+      assert("q1 pointer keeps bottom segment at minimum", nearlyEqual(lengths.bottom, 43), JSON.stringify(lengths));
+      assert("q1 pointer activates first quadrant", scene.dataset.quadrant === "q1", scene.dataset.quadrant);
+      assert("q1 pointer highlights positive labels", scene.dataset.axisX === "right" && scene.dataset.axisY === "top", `${scene.dataset.axisX}/${scene.dataset.axisY}`);
+      await wait(160);
+
+      const haloStyle = win.getComputedStyle(sectorHighlight);
+      assert(
+        "compact halo follows the selected point",
+        nearlyEqual(parsePx(haloStyle.left), 1560, 0.05) &&
+          nearlyEqual(parsePx(haloStyle.top), 442.5, 0.05),
+        `left=${haloStyle.left} top=${haloStyle.top} pointX=${styles.getPropertyValue("--point-x")} pointY=${styles.getPropertyValue("--point-y")}`
+      );
+      assert(
+        "compact halo does not render a fan-shaped wedge",
+        parsePx(haloStyle.width) <= 80 &&
+          parsePx(haloStyle.height) <= 80 &&
+          !haloStyle.backgroundImage.includes("conic-gradient"),
+        `width=${haloStyle.width} height=${haloStyle.height} background=${haloStyle.backgroundImage}`
+      );
+
+      const topLabelStyle = style(doc, ".axis-label--top");
+      const rightLabelStyle = style(doc, ".axis-label--right");
+      const leftLabelStyleInactive = style(doc, ".axis-label--left");
+      const bottomLabelStyleInactive = style(doc, ".axis-label--bottom");
+      assert("q1 selected labels use warm highlight color", isWarmHighlight(topLabelStyle.color) && isWarmHighlight(rightLabelStyle.color), `${topLabelStyle.color} / ${rightLabelStyle.color}`);
+      assert("q1 inactive labels stay white", leftLabelStyleInactive.color === "rgb(255, 255, 255)" && bottomLabelStyleInactive.color === "rgb(255, 255, 255)", `${leftLabelStyleInactive.color} / ${bottomLabelStyleInactive.color}`);
+      assert("q1 selected labels are larger than inactive labels", rect(doc, ".axis-label--top").height > rect(doc, ".axis-label--bottom").height && rect(doc, ".axis-label--right").height > rect(doc, ".axis-label--left").height);
+
+      movePointer(210, 800);
+      await wait(120);
+
+      const leftLabel = rect(doc, ".axis-label--left");
+      const bottomLabel = rect(doc, ".axis-label--bottom");
+      assert("left label follows extended negative x axis", leftLabel.left < 180, JSON.stringify(leftLabel));
+      assert("bottom label follows extended negative y axis", bottomLabel.top > 840, JSON.stringify(bottomLabel));
+
+      let qEventSeen = false;
+      win.addEventListener("keydown", () => {
+        qEventSeen = true;
+      }, { once: true });
+      win.dispatchEvent(new win.KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "q",
+      }));
+      await wait(60);
+      assert(
+        "q hide has a 0.3s fade contract",
+        win.getComputedStyle(axisStage).transitionDuration.includes("0.3s"),
+        win.getComputedStyle(axisStage).transition
+      );
+      assert(
+        "yellow preview hide has a 0.3s fade contract",
+        win.getComputedStyle(choice).transitionDuration.includes("0.3s"),
+        win.getComputedStyle(choice).transition
+      );
+      await wait(360);
+
+      assert("q keyboard event reaches iframe window", qEventSeen);
+      assert(
+        "q hides axis before confirmation",
+        Number.parseFloat(win.getComputedStyle(axisStage).opacity) === 0 || axisStage.style.opacity === "0",
+        `opacity=${win.getComputedStyle(axisStage).opacity} preview=${scene.dataset.previewHidden} locked=${scene.dataset.locked} style=${axisStage.getAttribute("style")}`
+      );
+      assert(
+        "q hides soft sector before confirmation",
+        Number.parseFloat(win.getComputedStyle(sectorHighlight).opacity) === 0 || sectorHighlight.style.opacity === "0",
+        `opacity=${win.getComputedStyle(sectorHighlight).opacity} style=${sectorHighlight.getAttribute("style")}`
+      );
+      assert(
+        "q hides yellow preview before confirmation",
+        Number.parseFloat(win.getComputedStyle(choice).opacity) === 0 || choice.style.opacity === "0",
+        `opacity=${win.getComputedStyle(choice).opacity} preview=${scene.dataset.previewHidden} locked=${scene.dataset.locked} style=${choice.getAttribute("style")}`
+      );
+      assert("q does not lock the selection", scene.dataset.locked === "false", scene.dataset.locked);
+
+      win.dispatchEvent(new win.KeyboardEvent("keydown", {
+        bubbles: true,
+        key: "q",
+      }));
+      await wait(60);
+      assert(
+        "second q restore has a 0.3s fade contract",
+        win.getComputedStyle(axisStage).transitionDuration.includes("0.3s"),
+        win.getComputedStyle(axisStage).transition
+      );
+      assert(
+        "yellow preview restore has a 0.3s fade contract",
+        win.getComputedStyle(choice).transitionDuration.includes("0.3s"),
+        win.getComputedStyle(choice).transition
+      );
+      await wait(360);
+
+      const restoredAxisOpacity = Number.parseFloat(win.getComputedStyle(axisStage).opacity);
+      const restoredChoiceOpacity = Number.parseFloat(win.getComputedStyle(choice).opacity);
+      assert(
+        "second q restores axis before confirmation",
+        restoredAxisOpacity === 1 || axisStage.style.opacity === "1",
+        `${restoredAxisOpacity} / preview=${scene.dataset.previewHidden} / locked=${scene.dataset.locked} / style=${axisStage.getAttribute("style")}`
+      );
+      assert(
+        "second q restores yellow preview before confirmation",
+        restoredChoiceOpacity === 1 || choice.style.opacity === "1",
+        `${restoredChoiceOpacity} / preview=${scene.dataset.previewHidden} / locked=${scene.dataset.locked} / style=${choice.getAttribute("style")}`
+      );
+
+      movePointer(1560, 442.5);
+      await wait(80);
+      const clickTarget = doc.elementFromPoint(430, 900);
+      assert("yellow preview receives mouse clicks", choice.contains(clickTarget) || clickTarget === choice, clickTarget?.id || clickTarget?.className || "none");
+      clickTarget.dispatchEvent(new win.MouseEvent("click", {
+        bubbles: true,
+        clientX: 430,
+        clientY: 900,
+      }));
+      await wait(380);
+
+      const responseColor = win.getComputedStyle(responseLine).color;
+      const confirmOpacity = Number.parseFloat(win.getComputedStyle(confirmButton).opacity);
+      const axisOpacity = Number.parseFloat(win.getComputedStyle(axisStage).opacity);
+      assert("confirmation locks the selection", scene.dataset.locked === "true", scene.dataset.locked);
+      assert(
+        "confirmed response line becomes fully opaque",
+        !responseColor.includes("0.6"),
+        `${responseColor} style=${responseLine.getAttribute("style")} locked=${scene.dataset.locked} choiceStyle=${choice.getAttribute("style")}`
+      );
+      assert("confirmation hides F key icon", confirmOpacity === 0 || confirmButton.style.opacity === "0", `${confirmOpacity} / ${confirmButton.getAttribute("style")}`);
+      assert("confirmation hides middle axis UI", axisOpacity === 0 || axisStage.style.opacity === "0", `${axisOpacity} / ${axisStage.getAttribute("style")}`);
+
+      window.__DYNAMIC_AXIS_TESTS__ = { passed: true, results, lengths };
+      output.textContent = results.join("\n");
+    }
+
+    run().catch((error) => {
+      window.__DYNAMIC_AXIS_TESTS__ = { passed: false, error: error.message, results };
+      output.textContent = `${results.join("\n")}\nFAIL ${error.message}`;
+      throw error;
+    });
+
+    function stylesFor(element) {
+      return element.ownerDocument.defaultView.getComputedStyle(element);
+    }
+  </script>
+</body>
+</html>

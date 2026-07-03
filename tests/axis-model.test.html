@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Axis Model Tests</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #111;
+      color: #f7f7f7;
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Axis Model Tests</h1>
+  <pre id="output">Running...</pre>
+
+  <script type="module">
+    import {
+      normalizePoint,
+      getQuadrant,
+      getAxisIntensity,
+      getAxisSegmentLengths,
+      buildResponse,
+    } from "../src/axis-model.js";
+
+    const output = document.getElementById("output");
+    const results = [];
+
+    function assert(name, condition, details = "") {
+      if (!condition) {
+        throw new Error(`${name}${details ? `: ${details}` : ""}`);
+      }
+      results.push(`PASS ${name}`);
+    }
+
+    function nearlyEqual(actual, expected, epsilon = 0.01) {
+      return Math.abs(actual - expected) <= epsilon;
+    }
+
+    try {
+      const rect = { left: 100, top: 200, width: 400, height: 300 };
+      const center = normalizePoint(300, 350, rect);
+      assert("center normalizes to origin", nearlyEqual(center.x, 0) && nearlyEqual(center.y, 0), JSON.stringify(center));
+
+      const upperRight = normalizePoint(500, 200, rect);
+      assert("top right clamps to positive x and positive y", nearlyEqual(upperRight.x, 1) && nearlyEqual(upperRight.y, 1), JSON.stringify(upperRight));
+
+      const lowerLeft = normalizePoint(0, 600, rect);
+      assert("outside lower left clamps to -1 and -1", nearlyEqual(lowerLeft.x, -1) && nearlyEqual(lowerLeft.y, -1), JSON.stringify(lowerLeft));
+
+      assert("quadrant one is knew plus cannot explain", getQuadrant({ x: 0.6, y: 0.4 }).id === "q1");
+      assert("quadrant two is knew plus my fault", getQuadrant({ x: -0.6, y: 0.4 }).id === "q2");
+      assert("quadrant three is no idea plus my fault", getQuadrant({ x: -0.6, y: -0.4 }).id === "q3");
+      assert("quadrant four is no idea plus cannot explain", getQuadrant({ x: 0.6, y: -0.4 }).id === "q4");
+
+      const stageRect = { left: 210, top: 215, width: 1500, height: 650 };
+      const pointFromStage = normalizePoint(1560, 442.5, stageRect);
+      assert("1500px x axis maps 80 points to the right", nearlyEqual(pointFromStage.x, 0.8), JSON.stringify(pointFromStage));
+      assert("650px y axis maps 30 points upward", nearlyEqual(pointFromStage.y, 0.3), JSON.stringify(pointFromStage));
+
+      const intensity = getAxisIntensity({ x: 0.8, y: 0.3 });
+      assert("x intensity maps to actual 100 point scale", intensity.xLabel === "Can't explain" && intensity.xPercent === 80, JSON.stringify(intensity));
+      assert("y intensity maps to actual 100 point scale", intensity.yLabel === "I knew" && intensity.yPercent === 30, JSON.stringify(intensity));
+
+      const q1Segments = getAxisSegmentLengths({ x: 0.8, y: 0.3 });
+      assert("q1 stretches positive x and y axis segments", nearlyEqual(q1Segments.right, 600) && nearlyEqual(q1Segments.top, 97.5), JSON.stringify(q1Segments));
+      assert("q1 keeps negative axis segments at their minimum", nearlyEqual(q1Segments.left, 46) && nearlyEqual(q1Segments.bottom, 43), JSON.stringify(q1Segments));
+
+      const q3Segments = getAxisSegmentLengths({ x: -1, y: -1 });
+      assert("q3 stretches negative x and y axis segments", nearlyEqual(q3Segments.left, 750) && nearlyEqual(q3Segments.bottom, 325), JSON.stringify(q3Segments));
+      assert("q3 keeps positive axis segments at their minimum", nearlyEqual(q3Segments.right, 46) && nearlyEqual(q3Segments.top, 43), JSON.stringify(q3Segments));
+
+      const q1Response = buildResponse({ x: 0.82, y: 0.76 });
+      assert("q1 response keeps the fixed quadrant line", q1Response.line.includes("money") && q1Response.line.includes("straight"), q1Response.line);
+      assert("q1 response does not add a second yellow metadata line", !("meta" in q1Response), JSON.stringify(q1Response));
+
+      window.__AXIS_MODEL_TESTS__ = { passed: true, results };
+      output.textContent = results.join("\n");
+    } catch (error) {
+      window.__AXIS_MODEL_TESTS__ = { passed: false, error: error.message, results };
+      output.textContent = `${results.join("\n")}\nFAIL ${error.message}`;
+      throw error;
+    }
+  </script>
+</body>
+</html>

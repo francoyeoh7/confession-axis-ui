@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confession Axis</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="scene" aria-label="Interactive confession axis">
+    <video id="backgroundVideo" class="scene__video" autoplay muted playsinline preload="auto" aria-hidden="true">
+      <source src="./assets/scene-background.mp4" type="video/mp4">
+    </video>
+    <div class="scene__shade" aria-hidden="true"></div>
+    <div class="scene__film" aria-hidden="true"></div>
+
+    <div id="uiStage" class="ui-stage">
+      <section class="axis-stage" aria-label="Choose a confession position">
+        <div id="axisPad" class="axis-pad" role="application" aria-label="Drag or click to choose the confession axis">
+          <div class="quadrant quadrant--q1" data-quadrant="q1"></div>
+          <div class="quadrant quadrant--q2" data-quadrant="q2"></div>
+          <div class="quadrant quadrant--q3" data-quadrant="q3"></div>
+          <div class="quadrant quadrant--q4" data-quadrant="q4"></div>
+
+          <div class="axis-line axis-line--x" aria-hidden="true"></div>
+          <div class="axis-line axis-line--y" aria-hidden="true"></div>
+          <div class="axis-cross" aria-hidden="true"></div>
+          <div class="sector-highlight" aria-hidden="true"></div>
+
+          <button id="selector" class="selector" type="button" aria-label="Current confession position"></button>
+          <div id="axisHitArea" class="axis-hit-area" aria-hidden="true"></div>
+        </div>
+
+        <span class="axis-label axis-label--top" data-axis="top">I knew</span>
+        <span class="axis-label axis-label--left" data-axis="left">My fault</span>
+        <span class="axis-label axis-label--right" data-axis="right">Can't explain</span>
+        <span class="axis-label axis-label--bottom" data-axis="bottom">I had no idea</span>
+      </section>
+
+      <section class="dialogue" aria-label="Dialogue">
+        <div class="dialogue__choice">
+          <p id="responseLine">Yeah. I wanted the money. I wanted it so bad I couldn't see straight.</p>
+          <button id="confirmButton" class="confirm" type="button" aria-label="Confirm selection">F</button>
+        </div>
+        <p class="dialogue__reply">
+          <strong>Jack:</strong>
+          <span id="replyLine">Seems we're done for. V... You knew before we walked in. Didn't you...</span>
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

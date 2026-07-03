@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Layout Check</title>
+</head>
+<body>
+  <script type="module">
+    const page = await fetch("../index.html").then((response) => response.text());
+    document.open();
+    document.write(page.replace("</body>", `
+      <script type="module">
+        function rect(selector) {
+          const element = document.querySelector(selector);
+          const box = element.getBoundingClientRect();
+          return { selector, left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+        }
+
+        function overlap(a, b) {
+          return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+        }
+
+        function assert(condition, message) {
+          if (!condition) throw new Error(message);
+        }
+
+        window.addEventListener("load", () => {
+          requestAnimationFrame(() => {
+            const labels = [
+              rect(".axis-label--top"),
+              rect(".axis-label--left"),
+              rect(".axis-label--right"),
+              rect(".axis-label--bottom"),
+            ];
+            const yellow = rect("#responseLine");
+            const jack = rect(".dialogue__reply");
+            const confirm = rect("#confirmButton");
+
+            for (let i = 0; i < labels.length; i += 1) {
+              assert(labels[i].width > 20 && labels[i].height > 10, `${labels[i].selector} has invalid size`);
+              assert(labels[i].left >= -2 && labels[i].right <= innerWidth + 2, `${labels[i].selector} is outside viewport`);
+              for (let j = i + 1; j < labels.length; j += 1) {
+                assert(!overlap(labels[i], labels[j]), `${labels[i].selector} overlaps ${labels[j].selector}`);
+              }
+            }
+
+            assert(yellow.left >= -2, "yellow dialogue starts outside viewport");
+            assert(yellow.right <= confirm.left - 8, "yellow dialogue overlaps F button");
+            assert(jack.left >= -2, "Jack line starts outside viewport");
+            assert(jack.bottom <= innerHeight + 2, "Jack line falls outside viewport");
+            window.__VISUAL_LAYOUT_CHECK__ = { passed: true, labels, yellow, jack, confirm };
+          });
+        });
+      <\/script>
+    </body>`));
+    document.close();
+  </script>
+</body>
+</html>

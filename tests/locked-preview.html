@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locked Preview</title>
+  <style>
+    html,
+    body,
+    iframe {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      border: 0;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="page" src="../index.html" title="Confession Axis"></iframe>
+  <script>
+    const iframe = document.getElementById("page");
+
+    async function waitForReady() {
+      const startedAt = performance.now();
+      while (performance.now() - startedAt < 5000) {
+        const doc = iframe.contentDocument;
+        if (doc?.readyState === "complete" && doc.getElementById("responseLine")) return;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
+
+    waitForReady().then(() => {
+      const win = iframe.contentWindow;
+      const doc = iframe.contentDocument;
+      const axisPad = doc.getElementById("axisPad");
+      axisPad.dispatchEvent(new win.PointerEvent("pointermove", {
+        bubbles: true,
+        clientX: 1560,
+        clientY: 442.5,
+        pointerId: 9,
+        pointerType: "mouse",
+      }));
+      win.requestAnimationFrame(() => {
+        doc.getElementById("responseLine").click();
+      });
+    });
+  </script>
+</body>
+</html>
