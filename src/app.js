@@ -54,6 +54,7 @@ function setSceneState(point, isActive = true) {
   const intensity = getAxisIntensity(point);
   const axisSegments = getAxisSegmentLengths(point);
   const response = buildResponse(point);
+  const focusScale = 0.52 + Math.min(1, Math.hypot(point.x, point.y)) * 0.56;
   const rawX = (point.x + 1) / 2;
   const rawY = (1 - point.y) / 2;
   const designX = AXIS_PAD.left + rawX * AXIS_PAD.width;
@@ -73,6 +74,7 @@ function setSceneState(point, isActive = true) {
   scene.style.setProperty("--axis-y-length", `${axisSegments.top + axisSegments.bottom}px`);
   scene.style.setProperty("--axis-x-center", `${(axisSegments.left / (axisSegments.left + axisSegments.right)) * 100}%`);
   scene.style.setProperty("--axis-y-center", `${(axisSegments.top / (axisSegments.top + axisSegments.bottom)) * 100}%`);
+  scene.style.setProperty("--focus-scale", focusScale.toFixed(3));
   scene.style.setProperty("--label-left-x", `${AXIS_CENTER.x - axisSegments.left - LABEL_OFFSET.x}px`);
   scene.style.setProperty("--label-right-x", `${AXIS_CENTER.x + axisSegments.right + 32}px`);
   scene.style.setProperty("--label-top-y", `${AXIS_CENTER.y - axisSegments.top - LABEL_OFFSET.top}px`);

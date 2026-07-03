@@ -173,9 +173,10 @@
       const q1Focus = doc.querySelector(".quadrant-focus--q1");
       const q3Focus = doc.querySelector(".quadrant-focus--q3");
       const q1FocusRect = rect(doc, ".quadrant-focus--q1");
+      const farFocusScale = Number.parseFloat(stylesFor(scene).getPropertyValue("--focus-scale"));
       assert(
         "q1 activates an origin-anchored quadrant focus arc",
-        win.getComputedStyle(q1Focus).opacity === "1" &&
+        Number.parseFloat(win.getComputedStyle(q1Focus).opacity) > 0.95 &&
           q1FocusRect.left >= 959 &&
           q1FocusRect.top < 540 &&
           q1FocusRect.width >= 230 &&
@@ -184,9 +185,22 @@
       );
       assert(
         "inactive quadrant focus arcs stay hidden",
-        Number.parseFloat(win.getComputedStyle(q3Focus).opacity) === 0,
+        Number.parseFloat(win.getComputedStyle(q3Focus).opacity) < 0.01,
         win.getComputedStyle(q3Focus).opacity
       );
+      assert("q1 far pointer expands the quadrant focus radius", farFocusScale > 0.8, String(farFocusScale));
+
+      movePointer(1010, 505);
+      await wait(180);
+      const nearFocusScale = Number.parseFloat(stylesFor(scene).getPropertyValue("--focus-scale"));
+      assert(
+        "near-origin pointer shrinks the quadrant focus radius",
+        nearFocusScale < farFocusScale - 0.15,
+        `near=${nearFocusScale} far=${farFocusScale}`
+      );
+
+      movePointer(1560, 442.5);
+      await wait(180);
 
       const haloStyle = win.getComputedStyle(sectorHighlight);
       assert(
@@ -229,16 +243,16 @@
       }));
       await wait(60);
       assert(
-        "q hide has a 0.3s fade contract",
-        win.getComputedStyle(axisStage).transitionDuration.includes("0.3s"),
+        "q hide has a 0.5s fade contract",
+        win.getComputedStyle(axisStage).transitionDuration.includes("0.5s"),
         win.getComputedStyle(axisStage).transition
       );
       assert(
-        "yellow preview hide has a 0.3s fade contract",
-        win.getComputedStyle(choice).transitionDuration.includes("0.3s"),
+        "yellow preview hide has a 0.5s fade contract",
+        win.getComputedStyle(choice).transitionDuration.includes("0.5s"),
         win.getComputedStyle(choice).transition
       );
-      await wait(360);
+      await wait(560);
 
       assert("q keyboard event reaches iframe window", qEventSeen);
       assert(
@@ -264,16 +278,16 @@
       }));
       await wait(60);
       assert(
-        "second q restore has a 0.3s fade contract",
-        win.getComputedStyle(axisStage).transitionDuration.includes("0.3s"),
+        "second q restore has a 0.5s fade contract",
+        win.getComputedStyle(axisStage).transitionDuration.includes("0.5s"),
         win.getComputedStyle(axisStage).transition
       );
       assert(
-        "yellow preview restore has a 0.3s fade contract",
-        win.getComputedStyle(choice).transitionDuration.includes("0.3s"),
+        "yellow preview restore has a 0.5s fade contract",
+        win.getComputedStyle(choice).transitionDuration.includes("0.5s"),
         win.getComputedStyle(choice).transition
       );
-      await wait(360);
+      await wait(560);
 
       const restoredAxisOpacity = Number.parseFloat(win.getComputedStyle(axisStage).opacity);
       const restoredChoiceOpacity = Number.parseFloat(win.getComputedStyle(choice).opacity);
@@ -297,11 +311,13 @@
         clientX: 430,
         clientY: 900,
       }));
-      await wait(380);
+      await wait(580);
 
       const responseColor = win.getComputedStyle(responseLine).color;
       const confirmOpacity = Number.parseFloat(win.getComputedStyle(confirmButton).opacity);
       const axisOpacity = Number.parseFloat(win.getComputedStyle(axisStage).opacity);
+      const confirmRect = rect(doc, "#confirmButton");
+      assert("F key icon is scaled down by 20 percent", nearlyEqual(confirmRect.width, 37, 1) && nearlyEqual(confirmRect.height, 37, 1), JSON.stringify(confirmRect));
       assert("confirmation locks the selection", scene.dataset.locked === "true", scene.dataset.locked);
       assert(
         "confirmed response line becomes fully opaque",

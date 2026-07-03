@@ -17,6 +17,7 @@
   --axis-y-length: 86px;
   --axis-x-center: 50%;
   --axis-y-center: 50%;
+  --focus-scale: 0.72;
   --label-left-x: 811px;
   --label-right-x: 1542px;
   --label-top-y: 126px;
@@ -91,7 +92,7 @@ button {
 
 .axis-stage {
   opacity: 1;
-  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .axis-pad {
@@ -121,7 +122,8 @@ button {
   opacity: 0;
   pointer-events: none;
   mix-blend-mode: screen;
-  transition: opacity 180ms ease, transform 180ms ease;
+  transform: scale(var(--focus-scale));
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms ease;
 }
 
 .quadrant-focus::before {
@@ -130,10 +132,8 @@ button {
   width: 480px;
   height: 480px;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 202, 20, 0.24) 0 10px, rgba(255, 202, 20, 0.16) 36px, rgba(255, 202, 20, 0.08) 92px, transparent 184px),
-    radial-gradient(circle at 50% 50%, transparent 0 118px, rgba(255, 202, 20, 0.18) 119px 123px, rgba(255, 202, 20, 0.08) 124px 152px, transparent 186px);
-  filter: blur(1.5px);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 202, 20, 0.36) 0 18px, rgba(255, 202, 20, 0.22) 58px, rgba(255, 202, 20, 0.12) 124px, rgba(255, 202, 20, 0.06) 176px, transparent 218px);
+  filter: blur(1.6px);
 }
 
 .quadrant-focus--q1 {
@@ -205,7 +205,7 @@ button {
     radial-gradient(circle at 50% 50%, transparent 0 21px, rgba(255, 202, 20, 0.46) 22px, transparent 23px 31px, rgba(255, 202, 20, 0.28) 32px, transparent 34px),
     radial-gradient(circle at 50% 50%, rgba(255, 202, 20, 0.22) 0 24px, rgba(255, 202, 20, 0.12) 25px 36px, transparent 37px);
   filter: drop-shadow(0 0 10px rgba(255, 202, 20, 0.56));
-  transition: left 100ms ease, top 100ms ease, opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: left 100ms ease, top 100ms ease, opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .axis-line {
@@ -387,7 +387,7 @@ button {
   height: 46px;
   cursor: pointer;
   opacity: 1;
-  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dialogue__choice p {
@@ -414,18 +414,18 @@ button {
   position: absolute;
   left: 1047px;
   top: 0;
-  width: 46px;
-  height: 46px;
+  width: 37px;
+  height: 37px;
   padding: 0;
   border: 1.5px solid var(--gold);
   border-radius: 2px;
   background: transparent;
   color: var(--gold);
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 500;
-  line-height: 38.727px;
+  line-height: 31px;
   cursor: pointer;
-  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms ease, color 160ms ease;
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1), border-color 160ms ease, color 160ms ease;
 }
 
 .dialogue__reply {
