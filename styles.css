@@ -112,8 +112,79 @@ button {
   background: transparent;
 }
 
-.quadrant {
-  display: none;
+.quadrant-focus {
+  position: absolute;
+  z-index: 0;
+  width: 330px;
+  height: 330px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.quadrant-focus::before {
+  content: "";
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 202, 20, 0.24) 0 10px, rgba(255, 202, 20, 0.16) 36px, rgba(255, 202, 20, 0.08) 92px, transparent 184px),
+    radial-gradient(circle at 50% 50%, transparent 0 118px, rgba(255, 202, 20, 0.18) 119px 123px, rgba(255, 202, 20, 0.08) 124px 152px, transparent 186px);
+  filter: blur(1.5px);
+}
+
+.quadrant-focus--q1 {
+  left: 960px;
+  top: 210px;
+  transform-origin: 0 100%;
+}
+
+.quadrant-focus--q1::before {
+  left: -240px;
+  bottom: -240px;
+}
+
+.quadrant-focus--q2 {
+  left: 630px;
+  top: 210px;
+  transform-origin: 100% 100%;
+}
+
+.quadrant-focus--q2::before {
+  right: -240px;
+  bottom: -240px;
+}
+
+.quadrant-focus--q3 {
+  left: 630px;
+  top: 540px;
+  transform-origin: 100% 0;
+}
+
+.quadrant-focus--q3::before {
+  right: -240px;
+  top: -240px;
+}
+
+.quadrant-focus--q4 {
+  left: 960px;
+  top: 540px;
+  transform-origin: 0 0;
+}
+
+.quadrant-focus--q4::before {
+  left: -240px;
+  top: -240px;
+}
+
+.scene[data-quadrant="q1"] .quadrant-focus--q1,
+.scene[data-quadrant="q2"] .quadrant-focus--q2,
+.scene[data-quadrant="q3"] .quadrant-focus--q3,
+.scene[data-quadrant="q4"] .quadrant-focus--q4 {
+  opacity: 1;
 }
 
 .sector-highlight {

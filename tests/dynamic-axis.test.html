@@ -170,6 +170,24 @@
       assert("q1 pointer highlights positive labels", scene.dataset.axisX === "right" && scene.dataset.axisY === "top", `${scene.dataset.axisX}/${scene.dataset.axisY}`);
       await wait(160);
 
+      const q1Focus = doc.querySelector(".quadrant-focus--q1");
+      const q3Focus = doc.querySelector(".quadrant-focus--q3");
+      const q1FocusRect = rect(doc, ".quadrant-focus--q1");
+      assert(
+        "q1 activates an origin-anchored quadrant focus arc",
+        win.getComputedStyle(q1Focus).opacity === "1" &&
+          q1FocusRect.left >= 959 &&
+          q1FocusRect.top < 540 &&
+          q1FocusRect.width >= 230 &&
+          q1FocusRect.height >= 230,
+        `opacity=${win.getComputedStyle(q1Focus).opacity} rect=${JSON.stringify(q1FocusRect)}`
+      );
+      assert(
+        "inactive quadrant focus arcs stay hidden",
+        Number.parseFloat(win.getComputedStyle(q3Focus).opacity) === 0,
+        win.getComputedStyle(q3Focus).opacity
+      );
+
       const haloStyle = win.getComputedStyle(sectorHighlight);
       assert(
         "compact halo follows the selected point",
